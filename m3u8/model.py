@@ -219,47 +219,48 @@ class M3U8(object):
     def add_segment(self, segment):
         self.segments.append(segment)
 
-    def dumps(self):
+    def dumps(self, sep='\n'):
         '''
         Returns the current m3u8 as a string.
         You could also use unicode(<this obj>) or str(<this obj>)
         '''
-        output = ['#EXTM3U']
+        return sep.join(self.dumps_lines())
+    def dumps_lines(self):
+        '''
+        Returns the current m3u8 as a sequence of lines.
+        '''
+        yield ['#EXTM3U']
         if self.is_independent_segments:
-            output.append('#EXT-X-INDEPENDENT-SEGMENTS')
+            yield '#EXT-X-INDEPENDENT-SEGMENTS'
         if self.media_sequence > 0:
-            output.append('#EXT-X-MEDIA-SEQUENCE:' + str(self.media_sequence))
+            yield '#EXT-X-MEDIA-SEQUENCE:' + str(self.media_sequence)
         if self.allow_cache:
-            output.append('#EXT-X-ALLOW-CACHE:' + self.allow_cache.upper())
+            yield '#EXT-X-ALLOW-CACHE:' + self.allow_cache.upper()
         if self.version:
-            output.append('#EXT-X-VERSION:' + self.version)
+            yield '#EXT-X-VERSION:' + self.version
         if self.target_duration:
-            output.append('#EXT-X-TARGETDURATION:' + int_or_float_to_string(self.target_duration))
+            yield '#EXT-X-TARGETDURATION:' + int_or_float_to_string(self.target_duration)
         if self.program_date_time is not None:
-            output.append('#EXT-X-PROGRAM-DATE-TIME:' + parser.format_date_time(self.program_date_time))
+            yield '#EXT-X-PROGRAM-DATE-TIME:' + parser.format_date_time(self.program_date_time)
         if not (self.playlist_type is None or self.playlist_type == ''):
-            output.append(
-                '#EXT-X-PLAYLIST-TYPE:%s' % str(self.playlist_type).upper())
+            yield '#EXT-X-PLAYLIST-TYPE:%s' % str(self.playlist_type).upper()
         if self.is_i_frames_only:
-            output.append('#EXT-X-I-FRAMES-ONLY')
+            yield '#EXT-X-I-FRAMES-ONLY'
         if self.is_variant:
             if self.media:
-                output.append(str(self.media))
-            output.append(str(self.playlists))
+                yield str(self.media)
+            yield str(self.playlists)
             if self.iframe_playlists:
-                output.append(str(self.iframe_playlists))
+                yield str(self.iframe_playlists)
 
         currentKey = None
         for segment in self.segments:
-            output.append(segment.toStr(currentKey))
+            yield segment.toStr(currentKey)
             currentKey = segment.key
         currentKey = None
 
         if self.is_endlist:
-            output.append('#EXT-X-ENDLIST')
-
-        return '\n'.join(output)
-
+            yield '#EXT-X-ENDLIST'
     def dump(self, filename):
         '''
         Saves the current m3u8 to ``filename``
@@ -367,43 +368,40 @@ class Segment(BasePathMixin):
         self.key = Key(base_uri=base_uri,**key) if key else None
 
 
-    def dumps(self, last_segment):
-        output = []
-        if last_segment and self.key != last_segment.key:
-          output.append(str(self.key))
-          output.append('\n')
+    def dumps(self, last_segment=None, sep='\n'):
+        sep.join(self.dumps_lines(last_segment=last_segment))
+    def dumps_lines(self, last_segment=None):
+        if last_segment:
+            if self.key != last_segment.key:
+                yield str(self.key)
 
         if self.discontinuity:
-            output.append('#EXT-X-DISCONTINUITY\n')
+            yield '#EXT-X-DISCONTINUITY'
             if self.program_date_time:
-                output.append('#EXT-X-PROGRAM-DATE-TIME:%s\n' % parser.format_date_time(self.program_date_time))
+                yield '#EXT-X-PROGRAM-DATE-TIME:%s' % parser.format_date_time(self.program_date_time)
         if self.cue_out:
-            output.append('#EXT-X-CUE-OUT-CONT\n')
-        output.append('#EXTINF:%s,' % int_or_float_to_string(self.duration))
-        if self.title:
-            output.append(quoted(self.title))
-        output.append('\n')
+            yield '#EXT-X-CUE-OUT-CONT'
+        yield '#EXTINF:%s,%s' % (int_or_float_to_string(self.duration), quoted(self.title) if self.title else '')
 
         if self.byterange:
-            output.append('#EXT-X-BYTERANGE:%s\n' % self.byterange)
+            yield '#EXT-X-BYTERANGE:%s' % self.byterange
 
-        output.append(self.uri)
-
-        return ''.join(output)
+        yield self.uri
+        yield ''
 
     def __str__(self):
-        return self.dumps()
+        return self.dumps(None)
 
 
 class SegmentList(list, GroupedBasePathMixin):
 
-    def __str__(self):
-        output = []
+    def dumps_lines(self):
         last_segment = None
         for segment in self:
-          output.append(segment.dumps(last_segment))
-          last_segment = segment
-        return '\n'.join(output)
+            yield segment.dumps(last_segment=last_segment)
+            last_segment = segment
+    def __str__(self):
+        return '\n'.join(self.dumps_lines())
 
     @property
     def uri(self):
@@ -634,32 +632,33 @@ class Media(BasePathMixin):
         self.extras = extras
 
     def dumps(self):
-        media_out = []
+        statements = []
 
         if self.uri:
-            media_out.append('URI=' + quoted(self.uri))
+            statements.append('URI=' + quoted(self.uri))
         if self.type:
-            media_out.append('TYPE=' + self.type)
+            statements.append('TYPE=' + self.type)
         if self.group_id:
-            media_out.append('GROUP-ID=' + quoted(self.group_id))
+            statements.append('GROUP-ID=' + quoted(self.group_id))
         if self.language:
-            media_out.append('LANGUAGE=' + quoted(self.language))
+            statements.append('LANGUAGE=' + quoted(self.language))
         if self.assoc_language:
-            media_out.append('ASSOC-LANGUAGE=' + quoted(self.assoc_language))
+            statements.append('ASSOC-LANGUAGE=' + quoted(self.assoc_language))
         if self.name:
-            media_out.append('NAME=' + quoted(self.name))
+            statements.append('NAME=' + quoted(self.name))
         if self.default:
-            media_out.append('DEFAULT=' + self.default)
+            statements.append('DEFAULT=' + self.default)
         if self.autoselect:
-            media_out.append('AUTOSELECT=' + self.autoselect)
+            statements.append('AUTOSELECT=' + self.autoselect)
         if self.forced:
-            media_out.append('FORCED=' + self.forced)
+            statements.append('FORCED=' + self.forced)
         if self.instream_id:
-            media_out.append('INSTREAM-ID=' + self.instream_id)
+            statements.append('INSTREAM-ID=' + self.instream_id)
         if self.characteristics:
-            media_out.append('CHARACTERISTICS=' + quoted(self.characteristics))
+            statements.append('CHARACTERISTICS=' + quoted(self.characteristics))
 
-        return ('#EXT-X-MEDIA:' + ','.join(media_out))
+        if statements:
+            return ('#EXT-X-MEDIA:' + ','.join(statements))
 
     def __str__(self):
         return self.dumps()
