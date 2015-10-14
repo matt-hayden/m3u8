@@ -7,15 +7,11 @@ from collections import namedtuple
 import os
 import errno
 import math
-<<<<<<< HEAD
-import urlparse
-=======
 
 try:
     import urlparse as url_parser
 except ImportError:
     import urllib.parse as url_parser
->>>>>>> globocom/master
 
 from m3u8 import parser
 
@@ -39,12 +35,8 @@ class M3U8(object):
             http://vid.com/segment1.ts -->  http://videoserver.com/hls/segment1.ts
 
        can be passed as parameter or setted as an attribute to ``M3U8`` object.
-<<<<<<< HEAD
 
-     `baseuri`
-=======
      `base_uri`
->>>>>>> globocom/master
       uri the playlist comes from. it is propagated to SegmentList and Key
       ex.: http://example.com/path/to
 
@@ -75,10 +67,6 @@ class M3U8(object):
         If this is a variant playlist (`is_variant` is True), returns a list of
         Playlist objects
 
-<<<<<<< HEAD
-      `i_frame_playlists`
-        Returns a list of I-frame Playlist objects.
-=======
       `iframe_playlists`
         If this is a variant playlist (`is_variant` is True), returns a list of
         IFramePlaylist objects
@@ -90,7 +78,6 @@ class M3U8(object):
       `media`
         If this is a variant playlist (`is_variant` is True), returns a list of
         Media objects
->>>>>>> globocom/master
 
       `target_duration`
         Returns the EXT-X-TARGETDURATION as an integer
@@ -156,15 +143,9 @@ class M3U8(object):
         self.base_path = base_path
 
     def _initialize_attributes(self):
-<<<<<<< HEAD
-        self.key = Key(baseuri=self.baseuri, **self.data['key']) if 'key' in self.data else None
-        self.segments = SegmentList([Segment(baseuri=self.baseuri, **params)
-                                      for params in self.data.get('segments', [])])
-=======
         self.key = Key(base_uri=self.base_uri, **self.data['key']) if 'key' in self.data else None
         self.segments = SegmentList([ Segment(base_uri=self.base_uri, **params)
                                       for params in self.data.get('segments', []) ])
->>>>>>> globocom/master
 
         for attr, param in self.simple_attributes:
             setattr(self, attr, self.data.get(param))
@@ -174,13 +155,6 @@ class M3U8(object):
             self.files.append(self.key.uri)
         self.files.extend(self.segments.uri)
 
-<<<<<<< HEAD
-        self.playlists = PlaylistList([Playlist(baseuri=self.baseuri, **playlist)
-                                        for playlist in self.data.get('playlists', [])])
-
-        self.iframe_playlists = IFramePlaylistList([IFramePlaylist(**iframe_playlist)
-                                        for iframe_playlist in self.data.get('iframe_playlists', [])])
-=======
         self.media = MediaList([ Media(base_uri=self.base_uri,
                                        **media)
                                  for media in self.data.get('media', []) ])
@@ -189,7 +163,6 @@ class M3U8(object):
                                                  media=self.media,
                                                  **playlist)
                                         for playlist in self.data.get('playlists', []) ])
->>>>>>> globocom/master
 
         self.iframe_playlists = PlaylistList()
         for ifr_pl in self.data.get('iframe_playlists', []):
@@ -203,15 +176,6 @@ class M3U8(object):
         return self.dumps()
 
     @property
-<<<<<<< HEAD
-    def baseuri(self):
-        return self._baseuri
-
-    @baseuri.setter
-    def baseuri(self, new_baseuri):
-        self._baseuri = new_baseuri
-        self.segments.baseuri = new_baseuri
-=======
     def base_uri(self):
         return self._base_uri
 
@@ -221,7 +185,6 @@ class M3U8(object):
         self.media.base_uri = new_base_uri
         self.playlists.base_uri = new_base_uri
         self.segments.base_uri = new_base_uri
->>>>>>> globocom/master
 
     @property
     def base_path(self):
@@ -246,10 +209,6 @@ class M3U8(object):
         self.playlists.append(playlist)
 
     def add_iframe_playlist(self, iframe_playlist):
-<<<<<<< HEAD
-        self.is_variant = True
-        self.iframe_playlists.append(iframe_playlist)
-=======
         if iframe_playlist is not None:
             self.is_variant = True
             self.iframe_playlists.append(iframe_playlist)
@@ -259,7 +218,6 @@ class M3U8(object):
 
     def add_segment(self, segment):
         self.segments.append(segment)
->>>>>>> globocom/master
 
     def dumps(self):
         '''
@@ -267,17 +225,9 @@ class M3U8(object):
         You could also use unicode(<this obj>) or str(<this obj>)
         '''
         output = ['#EXTM3U']
-<<<<<<< HEAD
-        if self.playlist_type:
-            output.append('#EXT-X-PLAYLIST-TYPE:' + self.playlist_type.upper())
-        if self.is_i_frames_only:
-            output.append('#EXT-X-I-FRAMES-ONLY')
-        if self.media_sequence is not None:
-=======
         if self.is_independent_segments:
             output.append('#EXT-X-INDEPENDENT-SEGMENTS')
         if self.media_sequence > 0:
->>>>>>> globocom/master
             output.append('#EXT-X-MEDIA-SEQUENCE:' + str(self.media_sequence))
         if self.allow_cache:
             output.append('#EXT-X-ALLOW-CACHE:' + self.allow_cache.upper())
@@ -296,12 +246,8 @@ class M3U8(object):
             if self.media:
                 output.append(str(self.media))
             output.append(str(self.playlists))
-<<<<<<< HEAD
-            output.append(str(self.iframe_playlists))
-=======
             if self.iframe_playlists:
                 output.append(str(self.iframe_playlists))
->>>>>>> globocom/master
 
         currentKey = None
         for segment in self.segments:
@@ -398,48 +344,6 @@ class Segment(BasePathMixin):
     `base_uri`
       uri the key comes from in URI hierarchy. ex.: http://example.com/path/to
 
-<<<<<<< HEAD
-    `key`
-      key that used to encrypt the content, None if unencrypted.
-    '''
-
-    def __init__(self, uri, baseuri, duration=None, title=None, key=None, byterange=None):
-        self.uri = uri
-        self.duration = duration
-        self.title = title
-        self._baseuri = baseuri
-        self.key = Key(baseuri=baseuri, **key) if key else None
-        self.byterange = byterange
-
-    @property
-    def baseuri(self):
-        return self._baseuri
-
-    @baseuri.setter
-    def baseuri(self, new_baseuri):
-        self._baseuri = new_baseuri
-        if self.key:
-            self.key.baseuri = new_baseuri
-
-    @property
-    def basepath(self):
-        return os.path.dirname(self.uri)
-
-    @basepath.setter
-    def basepath(self, newbasepath):
-        self.uri = self.uri.replace(self.basepath, newbasepath)
-        if self.key:
-            self.key.basepath = newbasepath
-
-    def toStr(self, currentKey=None):
-        output = []
-        if str(self.key) != str(currentKey):
-            if self.key == None:
-                output.append(str(Key('NONE', '', self.baseuri)))
-            else:
-                output.append(str(self.key))
-            output.append('\n')
-=======
     `byterange`
       byterange attribute from EXT-X-BYTERANGE parameter
 
@@ -472,20 +376,14 @@ class Segment(BasePathMixin):
                 output.append('#EXT-X-PROGRAM-DATE-TIME:%s\n' % parser.format_date_time(self.program_date_time))
         if self.cue_out:
             output.append('#EXT-X-CUE-OUT-CONT\n')
->>>>>>> globocom/master
         output.append('#EXTINF:%s,' % int_or_float_to_string(self.duration))
         if self.title:
             output.append(quoted(self.title))
         output.append('\n')
-<<<<<<< HEAD
-        if self.byterange:
-            output.append('#EXT-X-BYTERANGE:%s\n' % self.byterange)
-=======
 
         if self.byterange:
             output.append('#EXT-X-BYTERANGE:%s\n' % self.byterange)
 
->>>>>>> globocom/master
         output.append(self.uri)
 
         return ''.join(output)
@@ -537,26 +435,6 @@ class Key(BasePathMixin):
       since protocol version 5.
 
     '''
-<<<<<<< HEAD
-    def __init__(self, method, uri, baseuri, iv=None, keyformat="identity", keyformatversions="1"):
-        self.method = method
-        self.uri = uri
-        self.iv = iv
-        self.baseuri = baseuri
-        self.keyformat = keyformat
-        self.keyformatversions = keyformatversions
-
-    def __str__(self):
-        output = ['METHOD=%s' % self.method]
-        if self.method != 'NONE':
-            output.append('URI=%s' % quoted(self.uri))
-            if self.iv:
-                output.append('IV=%s' % self.iv)
-            if self.keyformat and self.keyformat != "identity":
-                output.append('KEYFORMAT=%s' % quoted(self.keyformat))
-            if self.keyformatversions and self.keyformatversions != "1":
-                output.append('KEYFORMATVERSIONS=%s' % quoted(self.keyformatversions))
-=======
     def __init__(self, method, uri, base_uri, iv=None, keyformat=None, keyformatversions=None):
         self.method = method
         self.uri = uri
@@ -577,7 +455,6 @@ class Key(BasePathMixin):
             output.append('KEYFORMAT="%s"' % self.keyformat)
         if self.keyformatversions:
             output.append('KEYFORMATVERSIONS="%s"' % self.keyformatversions)
->>>>>>> globocom/master
 
         return '#EXT-X-KEY:' + ','.join(output)
 
@@ -861,19 +738,9 @@ def denormalize_attribute(attribute):
 def quoted(string):
     return '"%s"' % string
 
-<<<<<<< HEAD
-
-def _urijoin(baseuri, path):
-    if parser.is_url(baseuri):
-        parsed_url = urlparse.urlparse(baseuri)
-        prefix = parsed_url.scheme + '://' + parsed_url.netloc
-        new_path = os.path.normpath(parsed_url.path + '/' + path)
-        return urlparse.urljoin(prefix, new_path.strip('/'))
-=======
 def _urijoin(base_uri, path):
     if parser.is_url(base_uri):
         return url_parser.urljoin(base_uri, path)
->>>>>>> globocom/master
     else:
         return os.path.normpath(os.path.join(base_uri, path.strip('/')))
 
