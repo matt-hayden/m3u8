@@ -349,10 +349,13 @@ class Segment(BasePathMixin):
 
     `key`
       Key used to encrypt the segment (EXT-X-KEY)
+
+    `options`
+      Some playlists may use three fields on EXTINF lines, rather than the usual two.
     '''
 
     def __init__(self, uri, base_uri, program_date_time=None, duration=None,
-                 title=None, byterange=None, cue_out=False, discontinuity=False, key=None):
+                 title=None, byterange=None, cue_out=False, discontinuity=False, key=None, options=[]):
         self.uri = uri
         self.duration = duration
         self.title = title

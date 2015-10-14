@@ -12,9 +12,9 @@ import re
 from m3u8 import protocol
 
 try:
-	from exceptions import Exception
+    from exceptions import Exception
 except:
-	pass
+    pass
 
 '''
 Standard Tags
@@ -160,11 +160,14 @@ def _parse_key(line):
 
 
 def _parse_extinf(line, data, state):
-    duration, title = line.replace(protocol.extinf + ':', '').split(',')
     if 'segment' not in state:
-        state['segment'] = {}
-    state['segment']['duration'] = float(duration)
-    state['segment']['title'] = remove_quotes(title)
+        state['segment'] = { 'duration': 0, 'title': '', 'options': [] }
+    members = line.replace(protocol.extinf + ':', '').split(',')
+    if len(members) == 3:
+        state['options'] = members.pop(1).split()
+    duration, title = members
+    state['segment']['duration'] = float(duration) if duration else 0.
+    state['segment']['title'] = remove_quotes(title) if title else ''
 
 
 def _parse_ts_chunk(line, data, state):
