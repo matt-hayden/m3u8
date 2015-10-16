@@ -369,7 +369,7 @@ class Segment(BasePathMixin):
 
 
     def dumps(self, last_segment=None, sep='\n'):
-        sep.join(self.dumps_lines(last_segment=last_segment))
+        return sep.join(self.dumps_lines(last_segment=last_segment))
     def dumps_lines(self, last_segment=None):
         if last_segment:
             if self.key != last_segment.key:
